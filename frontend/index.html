@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini AI LinkedIn - Professional Networking with AI</title>
+  <meta name="description" content="A professional networking platform powered by AI. Connect, share, and grow your career with intelligent skill matching.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            linkedin: {
+              50: '#e8f4fd',
+              100: '#cce5f8',
+              200: '#99cbf1',
+              300: '#66b0ea',
+              400: '#3396e3',
+              500: '#0a66c2',
+              600: '#084e96',
+              700: '#06386b',
+              800: '#042240',
+              900: '#020c16',
+            },
+            dark: {
+              50: '#f4f4f5',
+              100: '#e4e4e7',
+              200: '#d4d4d8',
+              300: '#a1a1aa',
+              400: '#71717a',
+              500: '#52525b',
+              600: '#3f3f46',
+              700: '#27272a',
+              800: '#1e1e23',
+              900: '#111114',
+              950: '#0a0a0d',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'slide-down': 'slideDown 0.3s ease-out',
+            'scale-in': 'scaleIn 0.3s ease-out',
+            'pulse-soft': 'pulseSoft 2s infinite',
+            'shimmer': 'shimmer 2s infinite',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            slideDown: { '0%': { opacity: '0', transform: 'translateY(-10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            scaleIn: { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+            pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.7' } },
+            shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e1e23; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+    /* Glassmorphism */
+    .glass { 
+      background: rgba(30, 30, 35, 0.7); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-light { 
+      background: rgba(255, 255, 255, 0.03); 
+      backdrop-filter: blur(10px); 
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, #3396e3, #66b0ea, #0a66c2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Glow effects */
+    .glow-blue { box-shadow: 0 0 20px rgba(10, 102, 194, 0.2); }
+    .glow-blue-hover:hover { box-shadow: 0 0 30px rgba(10, 102, 194, 0.3); }
+
+    /* Shimmer loading */
+    .shimmer-bg {
+      background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite;
+    }
+
+    /* Post card hover */
+    .post-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .post-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Button styles */
+    .btn-primary {
+      background: linear-gradient(135deg, #0a66c2, #3396e3);
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #084e96, #0a66c2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(10, 102, 194, 0.4);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Notification badge pulse */
+    .notification-badge {
+      animation: pulseSoft 2s infinite;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Input styles */
+    .input-dark {
+      background: rgba(39, 39, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    .input-dark:focus {
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.15);
+      outline: none;
+    }
+
+    /* Like animation */
+    .like-btn.liked {
+      color: #ef4444;
+    }
+    .like-btn.liked svg {
+      fill: #ef4444;
+      animation: scaleIn 0.3s ease-out;
+    }
+
+    /* Skill tag */
+    .skill-tag {
+      background: linear-gradient(135deg, rgba(10, 102, 194, 0.15), rgba(51, 150, 227, 0.1));
+      border: 1px solid rgba(10, 102, 194, 0.3);
+      transition: all 0.2s ease;
+    }
+    .skill-tag:hover {
+      background: linear-gradient(135deg, rgba(10, 102, 194, 0.25), rgba(51, 150, 227, 0.2));
+      transform: translateY(-1px);
+    }
+
+    /* Profile gradient background */
+    .profile-gradient {
+      background: linear-gradient(135deg, #0a66c2, #1a1a2e, #0f3460);
+    }
+
+    /* Toast notification */
+    .toast {
+      animation: slideDown 0.3s ease-out, fadeIn 0.3s ease-out;
+    }
+
+    /* Hide scrollbar for horizontal scroll */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-dark-950 text-gray-100 min-h-screen">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- AUTH PAGES (Login / Signup) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="authPage" class="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <!-- Animated background -->
+    <div class="absolute inset-0">
+      <div class="absolute top-0 left-0 w-96 h-96 bg-linkedin-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div class="absolute bottom-0 right-0 w-96 h-96 bg-linkedin-600/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+      <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-600/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-md px-6 animate-scale-in">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-linkedin-500 to-linkedin-600 flex items-center justify-center shadow-lg shadow-linkedin-500/30">
+            <i data-lucide="briefcase" class="w-6 h-6 text-white"></i>
+          </div>
+          <h1 class="text-3xl font-bold gradient-text">Mini LinkedIn</h1>
+        </div>
+        <p class="text-dark-300 text-sm">Professional networking powered by AI</p>
+      </div>
+
+      <!-- Auth Card -->
+      <div class="glass rounded-2xl p-8 glow-blue">
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-6 bg-dark-800 rounded-xl p-1">
+          <button id="loginTab" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all bg-linkedin-500 text-white">
+            Sign In
+          </button>
+          <button id="signupTab" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all text-dark-300 hover:text-white">
+            Sign Up
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+          <div>
+            <label class="block text-sm font-medium text-dark-200 mb-1.5">Email</label>
+            <input type="email" id="loginEmail" required placeholder="you@example.com"
+              class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-dark-200 mb-1.5">Password</label>
+            <input type="password" id="loginPassword" required placeholder="••••••••" minlength="6"
+              class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+          </div>
+          <button type="submit" id="loginBtn" class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-sm">
+            Sign In
+          </button>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signupForm" class="space-y-4 hidden" onsubmit="handleSignup(event)">
+          <div>
+            <label class="block text-sm font-medium text-dark-200 mb-1.5">Full Name</label>
+            <input type="text" id="signupName" required placeholder="John Doe"
+              class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-dark-200 mb-1.5">Email</label>
+            <input type="email" id="signupEmail" required placeholder="you@example.com"
+              class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-dark-200 mb-1.5">Password</label>
+            <input type="password" id="signupPassword" required placeholder="••••••••" minlength="6"
+              class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+          </div>
+          <button type="submit" id="signupBtn" class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-sm">
+            Create Account
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-6">
+          <div class="flex-1 h-px bg-dark-600"></div>
+          <span class="text-dark-400 text-xs">OR</span>
+          <div class="flex-1 h-px bg-dark-600"></div>
+        </div>
+
+        <!-- Dev Mode Quick Login -->
+        <button onclick="handleDevLogin()" 
+          class="w-full py-3 rounded-xl border border-dark-600 text-dark-200 text-sm font-medium hover:bg-dark-700 hover:text-white transition-all flex items-center justify-center gap-2">
+          <i data-lucide="code" class="w-4 h-4"></i>
+          Quick Demo Login (Dev Mode)
+        </button>
+      </div>
+
+      <p class="text-center text-dark-400 text-xs mt-6">
+        Powered by AI • Built with ❤️
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MAIN APP (After Login) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="appPage" class="hidden">
+    <!-- ─── NAVBAR ──────────────────────────────────────────────── -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-dark-700/50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo -->
+          <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('feed')">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-linkedin-500 to-linkedin-600 flex items-center justify-center">
+              <i data-lucide="briefcase" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold text-lg hidden sm:block gradient-text">Mini LinkedIn</span>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="flex-1 max-w-md mx-4 hidden sm:block">
+            <div class="relative">
+              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400"></i>
+              <input type="text" id="searchInput" placeholder="Search people, skills..."
+                class="input-dark w-full pl-10 pr-4 py-2 rounded-xl text-sm text-white placeholder-dark-400"
+                onkeyup="handleSearch(event)">
+              <!-- Search Results Dropdown -->
+              <div id="searchResults" class="hidden absolute top-full mt-2 w-full glass rounded-xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto z-50">
+              </div>
+            </div>
+          </div>
+
+          <!-- Nav Actions -->
+          <div class="flex items-center gap-1">
+            <button onclick="navigateTo('feed')" id="navFeed" class="nav-btn p-2.5 rounded-xl hover:bg-dark-700/50 transition-all group relative" title="Home">
+              <i data-lucide="home" class="w-5 h-5 text-dark-300 group-hover:text-linkedin-400"></i>
+            </button>
+            <button onclick="navigateTo('network')" id="navNetwork" class="nav-btn p-2.5 rounded-xl hover:bg-dark-700/50 transition-all group relative" title="My Network">
+              <i data-lucide="users" class="w-5 h-5 text-dark-300 group-hover:text-linkedin-400"></i>
+            </button>
+            <button onclick="navigateTo('notifications')" id="navNotifications" class="nav-btn p-2.5 rounded-xl hover:bg-dark-700/50 transition-all group relative" title="Notifications">
+              <i data-lucide="bell" class="w-5 h-5 text-dark-300 group-hover:text-linkedin-400"></i>
+              <span id="notifBadge" class="hidden notification-badge absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+            </button>
+            
+            <!-- Profile Dropdown -->
+            <div class="relative ml-2">
+              <button onclick="toggleProfileMenu()" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-dark-700/50 transition-all">
+                <img id="navProfilePic" src="" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-dark-600">
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-dark-400"></i>
+              </button>
+              
+              <div id="profileMenu" class="hidden absolute right-0 top-full mt-2 w-64 glass rounded-xl shadow-2xl overflow-hidden animate-slide-down">
+                <div class="p-4 border-b border-dark-700/50">
+                  <div class="flex items-center gap-3">
+                    <img id="menuProfilePic" src="" alt="" class="w-12 h-12 rounded-full object-cover">
+                    <div>
+                      <p id="menuName" class="text-sm font-semibold text-white"></p>
+                      <p id="menuHeadline" class="text-xs text-dark-300 line-clamp-1"></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-2">
+                  <button onclick="navigateTo('profile'); toggleProfileMenu();" class="w-full px-3 py-2 text-left text-sm text-dark-200 hover:bg-dark-700/50 rounded-lg transition-all flex items-center gap-2">
+                    <i data-lucide="user" class="w-4 h-4"></i> View Profile
+                  </button>
+                  <button onclick="navigateTo('edit-profile'); toggleProfileMenu();" class="w-full px-3 py-2 text-left text-sm text-dark-200 hover:bg-dark-700/50 rounded-lg transition-all flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Edit Profile
+                  </button>
+                  <hr class="border-dark-700/50 my-1">
+                  <button onclick="handleLogout()" class="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex items-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ─── MAIN CONTENT ──────────────────────────────────────── -->
+    <main class="pt-20 pb-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- ═══ FEED PAGE ═══════════════════════════════════════════ -->
+      <div id="feedPage" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left Sidebar - Profile Card -->
+          <aside class="lg:col-span-3">
+            <div class="glass rounded-2xl overflow-hidden sticky top-20">
+              <!-- Cover -->
+              <div class="h-20 profile-gradient"></div>
+              <!-- Profile Info -->
+              <div class="relative px-4 pb-4">
+                <img id="sidebarProfilePic" src="" alt="" class="w-16 h-16 rounded-full object-cover border-3 border-dark-800 absolute -top-8 left-4">
+                <div class="pt-10">
+                  <h3 id="sidebarName" class="font-semibold text-white text-sm cursor-pointer hover:text-linkedin-400 transition-colors" onclick="navigateTo('profile')"></h3>
+                  <p id="sidebarHeadline" class="text-xs text-dark-300 mt-0.5 line-clamp-2"></p>
+                </div>
+                <div class="flex gap-4 mt-4 text-xs">
+                  <div class="text-center">
+                    <p id="sidebarConnections" class="font-bold text-linkedin-400">0</p>
+                    <p class="text-dark-400">Connections</p>
+                  </div>
+                  <div class="text-center">
+                    <p id="sidebarPosts" class="font-bold text-linkedin-400">0</p>
+                    <p class="text-dark-400">Posts</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+          
+          <!-- Center - Feed -->
+          <div class="lg:col-span-6">
+            <!-- Create Post -->
+            <div class="glass rounded-2xl p-4 mb-4">
+              <div class="flex items-center gap-3">
+                <img id="createPostPic" src="" alt="" class="w-10 h-10 rounded-full object-cover">
+                <button onclick="openCreatePostModal()"
+                  class="flex-1 text-left px-4 py-2.5 rounded-xl bg-dark-700/50 text-dark-300 text-sm hover:bg-dark-600/50 transition-all">
+                  What's on your mind?
+                </button>
+              </div>
+              <div class="flex gap-2 mt-3 pt-3 border-t border-dark-700/50">
+                <button onclick="openCreatePostModal()" class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-dark-700/50 transition-all text-dark-300 text-sm">
+                  <i data-lucide="image" class="w-4 h-4 text-blue-400"></i> Photo
+                </button>
+                <button onclick="openCreatePostModal()" class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-dark-700/50 transition-all text-dark-300 text-sm">
+                  <i data-lucide="pen-line" class="w-4 h-4 text-green-400"></i> Write
+                </button>
+                <button onclick="openCreatePostModal()" class="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-dark-700/50 transition-all text-dark-300 text-sm">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i> AI Enhance
+                </button>
+              </div>
+            </div>
+
+            <!-- Feed Posts Container -->
+            <div id="feedContainer" class="space-y-4">
+              <!-- Posts will be rendered here -->
+            </div>
+            
+            <!-- Load More -->
+            <div id="loadMoreContainer" class="hidden mt-4 text-center">
+              <button onclick="loadMorePosts()" class="px-6 py-2.5 rounded-xl border border-dark-600 text-dark-300 text-sm hover:bg-dark-700/50 hover:text-white transition-all">
+                Load More Posts
+              </button>
+            </div>
+            
+            <!-- Empty Feed State -->
+            <div id="emptyFeed" class="hidden glass rounded-2xl p-12 text-center">
+              <i data-lucide="newspaper" class="w-12 h-12 text-dark-500 mx-auto mb-4"></i>
+              <h3 class="text-lg font-semibold text-dark-200 mb-2">No posts yet</h3>
+              <p class="text-dark-400 text-sm mb-4">Be the first to share something!</p>
+              <button onclick="openCreatePostModal()" class="btn-primary px-6 py-2.5 rounded-xl text-white text-sm font-medium">
+                Create Post
+              </button>
+            </div>
+
+            <!-- Loading Skeleton -->
+            <div id="feedLoading" class="space-y-4">
+              <div class="glass rounded-2xl p-4">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 rounded-full shimmer-bg"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="w-32 h-3 shimmer-bg rounded"></div>
+                    <div class="w-20 h-2 shimmer-bg rounded"></div>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-full h-3 shimmer-bg rounded"></div>
+                  <div class="w-3/4 h-3 shimmer-bg rounded"></div>
+                </div>
+                <div class="w-full h-48 shimmer-bg rounded-xl mt-3"></div>
+              </div>
+              <div class="glass rounded-2xl p-4">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 rounded-full shimmer-bg"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="w-28 h-3 shimmer-bg rounded"></div>
+                    <div class="w-16 h-2 shimmer-bg rounded"></div>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="w-full h-3 shimmer-bg rounded"></div>
+                  <div class="w-2/3 h-3 shimmer-bg rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Sidebar -->
+          <aside class="lg:col-span-3">
+            <!-- Suggested Connections -->
+            <div class="glass rounded-2xl p-4 sticky top-20">
+              <h3 class="text-sm font-semibold text-dark-200 mb-3">People you may know</h3>
+              <div id="suggestedUsers" class="space-y-3">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ═══ PROFILE PAGE ════════════════════════════════════════ -->
+      <div id="profilePage" class="hidden">
+        <div class="max-w-4xl mx-auto">
+          <!-- Profile Header -->
+          <div class="glass rounded-2xl overflow-hidden mb-6">
+            <div class="h-40 sm:h-52 profile-gradient relative">
+              <div class="absolute inset-0 bg-gradient-to-t from-dark-900/80 to-transparent"></div>
+            </div>
+            <div class="relative px-6 pb-6">
+              <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16 sm:-mt-12">
+                <img id="profilePicLarge" src="" alt="" class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-dark-800 shadow-xl">
+                <div class="flex-1 pb-1">
+                  <h1 id="profileName" class="text-2xl font-bold text-white"></h1>
+                  <p id="profileHeadline" class="text-dark-300 mt-1"></p>
+                  <div class="flex items-center gap-4 mt-2 text-sm text-dark-400">
+                    <span id="profileLocation" class="flex items-center gap-1">
+                      <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                      <span></span>
+                    </span>
+                    <span id="profileConnectionCount" class="flex items-center gap-1">
+                      <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                      <span>0 connections</span>
+                    </span>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button id="editProfileBtn" onclick="navigateTo('edit-profile')" class="hidden btn-primary px-5 py-2 rounded-xl text-white text-sm font-medium flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> Edit Profile
+                  </button>
+                  <button id="connectBtn" onclick="toggleConnection()" class="hidden px-5 py-2 rounded-xl border border-linkedin-500 text-linkedin-400 text-sm font-medium hover:bg-linkedin-500/10 transition-all flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Connect
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-1 space-y-6">
+              <!-- About -->
+              <div class="glass rounded-2xl p-5">
+                <h3 class="font-semibold text-white mb-3 flex items-center gap-2">
+                  <i data-lucide="info" class="w-4 h-4 text-linkedin-400"></i> About
+                </h3>
+                <p id="profileBio" class="text-dark-300 text-sm leading-relaxed"></p>
+              </div>
+
+              <!-- Skills -->
+              <div class="glass rounded-2xl p-5">
+                <h3 class="font-semibold text-white mb-3 flex items-center gap-2">
+                  <i data-lucide="award" class="w-4 h-4 text-linkedin-400"></i> Skills
+                </h3>
+                <div id="profileSkills" class="flex flex-wrap gap-2">
+                  <!-- Skill tags rendered here -->
+                </div>
+              </div>
+
+              <!-- Education -->
+              <div class="glass rounded-2xl p-5">
+                <h3 class="font-semibold text-white mb-3 flex items-center gap-2">
+                  <i data-lucide="graduation-cap" class="w-4 h-4 text-linkedin-400"></i> Education
+                </h3>
+                <p id="profileEducation" class="text-dark-300 text-sm"></p>
+              </div>
+            </div>
+
+            <!-- Right Column - User Posts -->
+            <div class="lg:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-white flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4 text-linkedin-400"></i> Posts
+                </h3>
+              </div>
+              <div id="profilePosts" class="space-y-4">
+                <!-- User's posts rendered here -->
+              </div>
+              <div id="profileNoPosts" class="hidden glass rounded-2xl p-8 text-center">
+                <i data-lucide="file-text" class="w-10 h-10 text-dark-500 mx-auto mb-3"></i>
+                <p class="text-dark-400 text-sm">No posts yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ EDIT PROFILE PAGE ═══════════════════════════════════ -->
+      <div id="editProfilePage" class="hidden">
+        <div class="max-w-2xl mx-auto">
+          <div class="glass rounded-2xl p-6 sm:p-8">
+            <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <i data-lucide="user-cog" class="w-5 h-5 text-linkedin-400"></i> Edit Profile
+            </h2>
+
+            <form id="editProfileForm" onsubmit="handleUpdateProfile(event)" class="space-y-5">
+              <!-- Profile Picture -->
+              <div class="flex items-center gap-4">
+                <img id="editProfilePic" src="" alt="" class="w-20 h-20 rounded-2xl object-cover border-2 border-dark-600">
+                <div>
+                  <label for="editProfilePicFile" class="cursor-pointer px-4 py-2 rounded-xl bg-dark-700 text-dark-200 text-sm hover:bg-dark-600 transition-all inline-flex items-center gap-2">
+                    <i data-lucide="camera" class="w-4 h-4"></i> Change Photo
+                  </label>
+                  <input type="file" id="editProfilePicFile" accept="image/*" class="hidden" onchange="previewProfilePic(event)">
+                  <p class="text-dark-400 text-xs mt-1">JPG, PNG, GIF, WebP • Max 5MB</p>
+                </div>
+              </div>
+
+              <!-- Name -->
+              <div>
+                <label class="block text-sm font-medium text-dark-200 mb-1.5">Full Name</label>
+                <input type="text" id="editName" required
+                  class="input-dark w-full px-4 py-3 rounded-xl text-white">
+              </div>
+
+              <!-- Headline -->
+              <div>
+                <label class="block text-sm font-medium text-dark-200 mb-1.5">Headline</label>
+                <input type="text" id="editHeadline" placeholder="e.g., Full Stack Developer | AI Enthusiast"
+                  class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+              </div>
+
+              <!-- Bio -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-sm font-medium text-dark-200">Bio</label>
+                  <button type="button" onclick="enhanceBioAI()" 
+                    class="text-xs text-linkedin-400 hover:text-linkedin-300 transition-colors flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> AI Enhance
+                  </button>
+                </div>
+                <textarea id="editBio" rows="4" placeholder="Tell us about yourself..."
+                  class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400 resize-none"></textarea>
+              </div>
+
+              <!-- Skills -->
+              <div>
+                <label class="block text-sm font-medium text-dark-200 mb-1.5">Skills</label>
+                <div id="editSkillTags" class="flex flex-wrap gap-2 mb-2"></div>
+                <div class="flex gap-2">
+                  <input type="text" id="editSkillInput" placeholder="Add a skill (press Enter)"
+                    class="input-dark flex-1 px-4 py-2.5 rounded-xl text-white text-sm placeholder-dark-400"
+                    onkeydown="handleAddSkill(event)">
+                  <button type="button" onclick="addSkillFromInput()" class="px-4 py-2.5 rounded-xl bg-dark-700 text-dark-200 text-sm hover:bg-dark-600 transition-all">
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              <!-- Location -->
+              <div>
+                <label class="block text-sm font-medium text-dark-200 mb-1.5">Location</label>
+                <input type="text" id="editLocation" placeholder="e.g., San Francisco, CA"
+                  class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+              </div>
+
+              <!-- Education -->
+              <div>
+                <label class="block text-sm font-medium text-dark-200 mb-1.5">Education</label>
+                <input type="text" id="editEducation" placeholder="e.g., B.S. Computer Science - MIT"
+                  class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400">
+              </div>
+
+              <!-- Submit -->
+              <div class="flex gap-3 pt-2">
+                <button type="submit" id="saveProfileBtn" class="btn-primary flex-1 py-3 rounded-xl text-white font-semibold text-sm">
+                  Save Changes
+                </button>
+                <button type="button" onclick="navigateTo('profile')" class="px-6 py-3 rounded-xl border border-dark-600 text-dark-300 text-sm hover:bg-dark-700/50 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ NOTIFICATIONS PAGE ══════════════════════════════════ -->
+      <div id="notificationsPage" class="hidden">
+        <div class="max-w-2xl mx-auto">
+          <div class="glass rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-dark-700/50 flex items-center justify-between">
+              <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="bell" class="w-5 h-5 text-linkedin-400"></i> Notifications
+              </h2>
+              <button onclick="markAllNotificationsRead()" class="text-xs text-linkedin-400 hover:text-linkedin-300 transition-colors">
+                Mark all as read
+              </button>
+            </div>
+            <div id="notificationsList" class="divide-y divide-dark-700/50">
+              <!-- Notifications rendered here -->
+            </div>
+            <div id="noNotifications" class="hidden p-12 text-center">
+              <i data-lucide="bell-off" class="w-10 h-10 text-dark-500 mx-auto mb-3"></i>
+              <p class="text-dark-400 text-sm">No notifications yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ NETWORK PAGE ════════════════════════════════════════ -->
+      <div id="networkPage" class="hidden">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <i data-lucide="users" class="w-5 h-5 text-linkedin-400"></i> My Network
+          </h2>
+          
+          <!-- Connections -->
+          <div class="glass rounded-2xl p-5 mb-6">
+            <h3 class="font-semibold text-white mb-4">Your Connections</h3>
+            <div id="connectionsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Connections rendered here -->
+            </div>
+            <div id="noConnections" class="hidden py-8 text-center">
+              <i data-lucide="user-plus" class="w-10 h-10 text-dark-500 mx-auto mb-3"></i>
+              <p class="text-dark-400 text-sm">No connections yet. Start connecting with people!</p>
+            </div>
+          </div>
+
+          <!-- Suggested People -->
+          <div class="glass rounded-2xl p-5">
+            <h3 class="font-semibold text-white mb-4">People you may know</h3>
+            <div id="networkSuggestions" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Suggestions rendered here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ OTHER USER PROFILE PAGE ═════════════════════════════ -->
+      <div id="otherProfilePage" class="hidden">
+        <!-- Same as profile page but for other users, rendered dynamically -->
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- CREATE POST MODAL -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="createPostModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="modal-overlay absolute inset-0" onclick="closeCreatePostModal()"></div>
+    <div class="relative glass rounded-2xl w-full max-w-lg p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-linkedin-400"></i> Create Post
+        </h3>
+        <button onclick="closeCreatePostModal()" class="p-1 rounded-lg hover:bg-dark-700 transition-all">
+          <i data-lucide="x" class="w-5 h-5 text-dark-300"></i>
+        </button>
+      </div>
+
+      <form id="createPostForm" onsubmit="handleCreatePost(event)" class="space-y-4">
+        <!-- Caption -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-sm font-medium text-dark-200">What's on your mind?</label>
+            <button type="button" onclick="enhanceCaptionAI()" 
+              class="text-xs text-linkedin-400 hover:text-linkedin-300 transition-colors flex items-center gap-1"
+              id="enhanceCaptionBtn">
+              <i data-lucide="sparkles" class="w-3 h-3"></i> AI Enhance
+            </button>
+          </div>
+          <textarea id="postCaption" rows="4" required placeholder="Share your thoughts, achievements, or insights..."
+            class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-dark-400 resize-none"></textarea>
+        </div>
+
+        <!-- Image Upload -->
+        <div>
+          <label for="postImage" class="block cursor-pointer">
+            <div id="imageUploadArea" class="border-2 border-dashed border-dark-600 rounded-xl p-6 text-center hover:border-linkedin-500/50 transition-all">
+              <i data-lucide="image-plus" class="w-8 h-8 text-dark-400 mx-auto mb-2"></i>
+              <p class="text-dark-300 text-sm">Click or drag an image here</p>
+              <p class="text-dark-500 text-xs mt-1">Optional • JPG, PNG, GIF, WebP</p>
+            </div>
+          </label>
+          <input type="file" id="postImage" accept="image/*" class="hidden" onchange="previewPostImage(event)">
+          <div id="imagePreviewContainer" class="hidden mt-2 relative">
+            <img id="postImagePreview" src="" alt="Preview" class="w-full rounded-xl object-cover max-h-60">
+            <button type="button" onclick="removePostImage()" class="absolute top-2 right-2 p-1.5 bg-dark-900/80 rounded-lg hover:bg-dark-800 transition-all">
+              <i data-lucide="x" class="w-4 h-4 text-white"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="createPostBtn" class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-2">
+          <i data-lucide="send" class="w-4 h-4"></i> Post
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- LOADING OVERLAY -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-dark-950/80 backdrop-blur-sm">
+    <div class="text-center animate-pulse-soft">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-linkedin-500 to-linkedin-600 flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="loader-2" class="w-6 h-6 text-white animate-spin"></i>
+      </div>
+      <p id="loadingText" class="text-dark-300 text-sm">Loading...</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MAIN JAVASCRIPT -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <script src="app.js"></script>
+</body>
+</html>
